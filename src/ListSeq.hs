@@ -52,6 +52,28 @@ instance Seq [] where
     joinS [xs] = xs
     joinS (xs:xss) = xs ++ (joinS xss)
 
+    data Tree a = Leaf a | Node (Tree a) (Tree a)
+
+    toTree : Seq a -> Tree a
+    toTree xs = let ls = length xs
+                in toTree' xs
+                where
+                toTree' xs = case ls of
+                            1 -> (Leaf s0)
+                            n -> Node (toTree (take xs pp))
+                            (toTree (drop xs pp))
+                pp = 2 ** logBase 2 (n - 1)
+
+    reduceS f e xs = f e (reduceT f xs)
+
+    reduceT f (Leaf x) = x
+    reduceT f (Node l r) = let (rl, rr) = (reduceT f l) ||| (reduceT f r)
+                           in f rl rr
+
+    fromList xs = xs
+
+    scanS f b s = (tabulate (λi → reduce f b (take s i)) length s, reduce f b s)
+    
     -- reduceS f e xs = case showtS xs of
     --                 EMPTY -> e
     --                 ELT x -> f e x
@@ -59,15 +81,15 @@ instance Seq [] where
     --                     let (ll, rr) = reduceS f e l ||| reduceS f e r
     --                     in f ll rr  
 
-    -- reduceS f e xs = f e (reduceS' f xs)
 
     -- reduceS' f xs = case showtS xs of
     --                     EMPTY -> []
     --                     ELT x -> x
     --                     NODE l r -> 
     --                         let (ll, rr) = reduceS' f l ||| reduceS' f r
-    --                         in f ll rr
+    --                         in f ll rr 
 
-    fromList xs = xs
+
+
 
 asd = reduceS (+) 0 [1, 2, 3, 4]

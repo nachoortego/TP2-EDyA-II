@@ -1,0 +1,7 @@
+mapS f (x:xs) = O ( sum x e xs W(fx))
+
+\[
+\texttt{mapS}~f~(x{:}xs) = \mathcal{O} \left( \sum_{x \in xs} W(f(x)) \right)
+\]
+
+
