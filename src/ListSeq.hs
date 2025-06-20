@@ -41,8 +41,8 @@ instance Seq [] where
 
     showtS [] = EMPTY
     showtS [x] = ELT x
-    showtS xs = let hl = div (length xs) 2
-                    (l, r) = take hl xs ||| drop hl xs
+    showtS xs = let hl = div (lengthS xs) 2
+                    (l, r) = takeS xs hl ||| dropS xs hl
                 in NODE l r
 
     showlS [] = NIL
@@ -51,56 +51,28 @@ instance Seq [] where
     joinS [[]] = []
     joinS [xs] = xs
     joinS (xs:xss) = xs ++ (joinS xss)
+    
+    reduceS f e xs = f e (reduceS' f (lengthS xs) xs)
+        where
+            reduceS' f l xs = case l of 
+                                   1 -> (nthS xs 0)
+                                   2 -> let (xs0, xs1) = (nthS xs 0) ||| (nthS xs 1)  
+                                        in f xs0 xs1
+                                   n -> let n2 = 2 ^ (floor (logBase 2 (fromIntegral (n - 1))))
+                                            l' = l - n2 
+                                            l'' = n - l'
+                                            (rl, rr) = (reduceS' f l' (takeS xs n2)) ||| (reduceS' f l'' (dropS xs l'))
+                                        in f rl rr
 
-    data Tree a = Leaf a | Node (Tree a) (Tree a)
+    -- scanS 
 
-    toTree : Seq a -> Tree a
-    toTree xs = let ls = length xs
-                in toTree' xs
-                where
-                toTree' xs = case ls of
-                            1 -> (Leaf s0)
-                            n -> Node (toTree (take xs pp))
-                            (toTree (drop xs pp))
-                pp = 2 ** logBase 2 (n - 1)
-
-
-    reduce f e xs = f e (reduceS' (length xs) f xs)
-
-    reduceS' f l xs = case l of 
-                            1 -> xs 
-                            2 -> f (nth 0 xs) (nth 1 xs)
-                            n -> let n2 = 2 ** logBase 2 (n - 1)
-                                    l' = l - n2 
-                                    l'' = n - l'
-                                    (rl, rr) = (reduceS' f l' (take n2 xs)) ||| (reduceS' f l'' (drop l' xs))
-                                    in f rl rr
-                                
-
-    reduceT f (Leaf x) = x
-    reduceT f (Node l r) = let (rl, rr) = (reduceT f l) ||| (reduceT f r)
-                           in f rl rr
-
-    fromList xs = xs
-
-    scanS f b s = (tabulate (λi → reduce f b (take s i)) length s, reduce f b s)
-
-    -- reduceS f e xs = case showtS xs of
-    --                 EMPTY -> e
-    --                 ELT x -> f e x
-    --                 NODE l r -> 
-    --                     let (ll, rr) = reduceS f e l ||| reduceS f e r
-    --                     in f ll rr  
+    fromList = id
 
 
-    -- reduceS' f xs = case showtS xs of
-    --                     EMPTY -> []
-    --                     ELT x -> x
-    --                     NODE l r -> 
-    --                         let (ll, rr) = reduceS' f l ||| reduceS' f r
-    --                         in f ll rr 
+
+    -- scanS f b s = (tabulate (λi → reduce f b (take s i)) length s, reduce f b s)
 
 
 
 
-asd = reduceS (+) 0 [1, 2, 3, 4]
+asd = reduceS (+) 2 [1, 2, 3, 4]
