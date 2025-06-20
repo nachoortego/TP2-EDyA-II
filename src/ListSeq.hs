@@ -64,7 +64,18 @@ instance Seq [] where
                             (toTree (drop xs pp))
                 pp = 2 ** logBase 2 (n - 1)
 
-    reduceS f e xs = f e (reduceT f xs)
+
+    reduce f e xs = f e (reduceS' (length xs) f xs)
+
+    reduceS' f l xs = case l of 
+                            1 -> xs 
+                            2 -> f (nth 0 xs) (nth 1 xs)
+                            n -> let n2 = 2 ** logBase 2 (n - 1)
+                                    l' = l - n2 
+                                    l'' = n - l'
+                                    (rl, rr) = (reduceS' f l' (take n2 xs)) ||| (reduceS' f l'' (drop l' xs))
+                                    in f rl rr
+                                
 
     reduceT f (Leaf x) = x
     reduceT f (Node l r) = let (rl, rr) = (reduceT f l) ||| (reduceT f r)
@@ -73,7 +84,7 @@ instance Seq [] where
     fromList xs = xs
 
     scanS f b s = (tabulate (λi → reduce f b (take s i)) length s, reduce f b s)
-    
+
     -- reduceS f e xs = case showtS xs of
     --                 EMPTY -> e
     --                 ELT x -> f e x
