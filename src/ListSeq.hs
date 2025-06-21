@@ -64,7 +64,7 @@ instance Seq [] where
                                             (rl, rr) = (reduceS' f l' (takeS xs n2)) ||| (reduceS' f l'' (dropS xs l'))
                                         in f rl rr
 
-    -- scanS 
+    scanS f e xs = 
 
     fromList = id
 
