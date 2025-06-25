@@ -14,10 +14,11 @@ instance Seq [] where
     nthS (x:xs) 0 = x 
     nthS (x:xs) n = nthS xs (n - 1)
 
+    tabulateS f 0 = emptyS
     tabulateS f n = 
         tabulateS' f 0
         where 
-            tabulateS' f i | i == n = [f i]
+            tabulateS' f i | i == (n-1) = [f i]
                            | otherwise = 
                                 let (fi, tab) = f i ||| tabulateS' f (i+1)
                                 in fi : tab
@@ -64,15 +65,37 @@ instance Seq [] where
                                             (rl, rr) = (reduceS' f l' (takeS xs n2)) ||| (reduceS' f l'' (dropS xs l'))
                                         in f rl rr
 
-    scanS f e xs = 
+    scanS f e xs | lengthS xs == 1 = (singletonS e, f e (nthS xs 0))
+                 | otherwise = let  h = div (lengthS xs) 2
+                                    sc = contract xs h f
+                                    (s', st) = scanS f e sc
+                                    r = tabulateS (expand f xs s') (lengthS xs)
+                                in
+                                    (r, st)
 
     fromList = id
 
+contract :: Seq s => s a -> Int -> (a -> a -> a) -> s a
+contract xs h f = let 
+                    l = lengthS xs
+                    f' i = f (nthS xs (i*2)) (nthS xs (i*2+1))
+                in 
+                    if mod l 2 /= 0
+                    then appendS (tabulateS f' h) (singletonS (nthS xs (l - 1))) 
+                    else tabulateS f' h
+
+expand :: Seq s => (a -> a ->a) -> s a -> s a -> Int -> a
+expand f s s' i =  let i' = div i 2
+                   in
+                    if mod i 2 == 0
+                    then nthS s' i'
+                    else f (nthS s' i') (nthS s (i-1))
 
 
-    -- scanS f b s = (tabulate (λi → reduce f b (take s i)) length s, reduce f b s)
+asd = scanS (+) 0 [1, 2, 3, 4]
+
+zxc = scanS op "b" ["1", "2", "3", "4", "5"]
+  where op x y = concat ["(", x, "+", y,")"]
 
 
-
-
-asd = reduceS (+) 2 [1, 2, 3, 4]
+qwe = contract [1] 0 (+)
