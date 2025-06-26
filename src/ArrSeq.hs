@@ -15,35 +15,38 @@ instance Seq A.Arr where
 
     tabulateS = A.tabulate
 
-    mapS f s = A.tabulate (\i -> f (nthS i s)) (lengthS s)
+    mapS f s = A.tabulate (\i -> f (nthS s i)) (lengthS s)
 
-    filterS p s | length s == 1 = let x = nthS s 0
+    filterS p s | lengthS s == 1 = let x = nthS s 0
                                   in case p x of
                                        True -> singletonS x
                                        False -> emptyS
-                | otherwise = let h = div (length s) 2
-                                  (fl, fr) = filterS (take h s) ||| filterS (drop h s)
-                                  in append fl fr 
+                | otherwise = let h = div (lengthS s) 2
+                                  (fl, fr) = filterS p (takeS s h) ||| filterS p (dropS s h)
+                                  in appendS fl fr 
 
     appendS s t = let (ls, lt) = lengthS s ||| lengthS t
-                  in  A.tabulate (\i -> if i < ls then (nthS i s) else (nthS (i - ls) t)) (ls + lt)
+                  in  A.tabulate (\i -> if i < ls then (nthS s i) else (nthS t (i - ls))) (ls + lt)
 
     takeS s n = A.subArray 0 n s
 
     dropS s n = A.subArray (lengthS s - n) (lengthS s) s
 
-    showtS s | length s == 0 = EMPTY
-             | length s == 1 = ELT (nthS 0 s)
+    showtS s | lengthS s == 0 = EMPTY
+             | lengthS s == 1 = ELT (nthS s 0)
              | otherwise     = let hl = div (lengthS s) 2
                                    (l, r) = takeS s hl ||| dropS s hl
                                in NODE l r
 
-    showlS s | length s == 0 = NIL
-             | otherwise     = CONS (nthS 0 s) (drop 1 s)
+    showlS s | lengthS s == 0 = NIL
+             | otherwise     = CONS (nthS s 0) (dropS s 1)
 
     joinS ss = A.flatten ss
 
-    reduceS f e xs = f e (reduceS' f (lengthS xs) xs)
+    reduceS f e xs = let l = lengthS xs
+                     in if l == 0 
+                        then e
+                        else f e (reduceS' f l xs)
       where
         reduceS' f l xs = case l of 
                                 1 -> (nthS xs 0)
@@ -55,7 +58,8 @@ instance Seq A.Arr where
                                          (rl, rr) = (reduceS' f l' (takeS xs n2)) ||| (reduceS' f l'' (dropS xs l'))
                                      in f rl rr
 
-    scanS f e xs | lengthS xs == 1 = (singletonS e, f e (nthS xs 0))
+    scanS f e xs | lengthS xs == 0 = (emptyS, e)
+                 | lengthS xs == 1 = (singletonS e, f e (nthS xs 0))
                  | otherwise = let  h = div (lengthS xs) 2
                                     sc = contract xs h f
                                     (s', st) = scanS f e sc
@@ -64,7 +68,7 @@ instance Seq A.Arr where
                                     (r, st)
 
     fromList = A.fromList
-
+--hola soy nacho y soy extremadamente putito re putito y golosa, mestre haceme la co haceme la co.
 
 contract :: Seq s => s a -> Int -> (a -> a -> a) -> s a
 contract xs h f = let 
