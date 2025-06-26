@@ -23,6 +23,7 @@ instance Seq [] where
                                 let (fi, tab) = f i ||| tabulateS' f (i+1)
                                 in fi : tab
 
+    mapS f [] = []
     mapS f (x:xs) = 
         let (fx, fxs) = f x ||| mapS f xs
         in fx : fxs
@@ -53,27 +54,28 @@ instance Seq [] where
     joinS [xs] = xs
     joinS (xs:xss) = xs ++ (joinS xss)
     
-    reduceS f e xs = f e (reduceS' f (lengthS xs) xs)
-        where
-            reduceS' f l xs = case l of 
-                                   1 -> (nthS xs 0)
-                                   2 -> let (xs0, xs1) = (nthS xs 0) ||| (nthS xs 1)  
-                                        in f xs0 xs1
-                                   n -> let n2 = 2 ^ (floor (logBase 2 (fromIntegral (n - 1))))
-                                            l' = l - n2 
-                                            l'' = n - l'
-                                            (rl, rr) = (reduceS' f l' (takeS xs n2)) ||| (reduceS' f l'' (dropS xs l'))
-                                        in f rl rr
-
-    scanS f e xs | lengthS xs == 1 = (singletonS e, f e (nthS xs 0))
-                 | otherwise = let  h = div (lengthS xs) 2
-                                    sc = contract xs h f
-                                    (s', st) = scanS f e sc
-                                    r = tabulateS (expand f xs s') (lengthS xs)
-                                in
-                                    (r, st)
+    scanS f e []  = (emptyS, e)
+    scanS f e [x] = (singletonS e, f e x)
+    scanS f e xs  = let h = div (lengthS xs) 2
+                        sc = contract xs h f
+                        (s', st) = scanS f e sc
+                        r = tabulateS (expand f xs s') (lengthS xs)
+                    in
+                        (r, st)
 
     fromList = id
+ 
+    reduceS f e [] = e
+    reduceS f e [x] = f e x 
+    reduceS f e (xs) = let xs' = contractR f xs 
+                           in case xs' of 
+                            [a] -> f e a 
+                            _    -> reduceS f e xs'
+
+contractR f [] = []
+contractR f [x] = [x]
+contractR f (x:y:xs) = (f x y) : (contractR f xs)
+
 
 contract :: Seq s => s a -> Int -> (a -> a -> a) -> s a
 contract xs h f = let 
@@ -92,7 +94,11 @@ expand f s s' i =  let i' = div i 2
                     else f (nthS s' i') (nthS s (i-1))
 
 
-asd = scanS (+) 0 [1, 2, 3, 4]
+l = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14" , "15"]
+ln = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 , 15]
+
+asd = reduceS op "b" l
+  where op x y = concat ["(", x, "+", y,")"]
 
 zxc = scanS op "b" ["1", "2", "3", "4", "5"]
   where op x y = concat ["(", x, "+", y,")"]
