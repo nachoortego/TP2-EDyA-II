@@ -35,7 +35,6 @@ instance Seq [] where
                             False -> fxs
     
     appendS xs ys = xs ++ ys
-    -- appendS = (++)
 
     takeS xs n = take n xs
 

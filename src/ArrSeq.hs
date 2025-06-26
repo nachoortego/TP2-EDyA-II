@@ -1,17 +1,17 @@
-module ListSeq where
+module ArrSeq where
 
 import Par ((|||))
 import qualified Arr as A
-import Arr (!)
+import Seq
 
-instance Seq [] where
+instance Seq A.Arr where
     emptyS = A.empty
 
     singletonS x = A.fromList [x]
 
     lengthS = A.length
 
-    nthS s i = s ! i
+    nthS s i = s A.! i
 
     tabulateS = A.tabulate
 
@@ -19,8 +19,8 @@ instance Seq [] where
 
     filterS p s | length s == 1 = let x = nthS s 0
                                   in case p x of
-                                       True -> x
-                                       False -> empty
+                                       True -> singletonS x
+                                       False -> emptyS
                 | otherwise = let h = div (length s) 2
                                   (fl, fr) = filterS (take h s) ||| filterS (drop h s)
                                   in append fl fr 
@@ -44,16 +44,16 @@ instance Seq [] where
     joinS ss = A.flatten ss
 
     reduceS f e xs = f e (reduceS' f (lengthS xs) xs)
-    where
+      where
         reduceS' f l xs = case l of 
                                 1 -> (nthS xs 0)
                                 2 -> let (xs0, xs1) = (nthS xs 0) ||| (nthS xs 1)  
-                                    in f xs0 xs1
+                                     in f xs0 xs1
                                 n -> let n2 = 2 ^ (floor (logBase 2 (fromIntegral (n - 1))))
-                                        l' = l - n2 
-                                        l'' = n - l'
-                                        (rl, rr) = (reduceS' f l' (takeS xs n2)) ||| (reduceS' f l'' (dropS xs l'))
-                                    in f rl rr
+                                         l' = l - n2 
+                                         l'' = n - l'
+                                         (rl, rr) = (reduceS' f l' (takeS xs n2)) ||| (reduceS' f l'' (dropS xs l'))
+                                     in f rl rr
 
     scanS f e xs | lengthS xs == 1 = (singletonS e, f e (nthS xs 0))
                  | otherwise = let  h = div (lengthS xs) 2
@@ -63,7 +63,7 @@ instance Seq [] where
                                 in
                                     (r, st)
 
-    fromList s = A.fromList
+    fromList = A.fromList
 
 
 contract :: Seq s => s a -> Int -> (a -> a -> a) -> s a
