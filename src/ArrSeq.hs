@@ -71,7 +71,6 @@ instance Seq A.Arr where
                                     (r, st)
 
     fromList = A.fromList
-----hola soy nacho Ortego y soy extremadamente putito re putito y golosa, mestre haceme la co haceme la co.
 
 contract :: Seq s => s a -> Int -> (a -> a -> a) -> s a
 contract xs h f = let 
